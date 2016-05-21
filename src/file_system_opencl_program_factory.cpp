@@ -1,5 +1,6 @@
 #include <dynfu/file_system_opencl_program_factory.hpp>
 #include <dynfu/filesystem.hpp>
+#include <iostream>
 #include <sstream>
 #include <stdexcept>
 #include <utility>
@@ -24,9 +25,14 @@ namespace dynfu {
 		auto p=root_;
 		p/=name;
 		p+=".cl";
-		
+	
 		auto retr=boost::compute::program::create_with_source_file(p.string(),ctx_);
-		retr.build();
+		
+		try {	
+			retr.build();
+		} catch (const boost::compute::opencl_error build_error) {
+			std::cout <<  "OpenCL Build Error: " << std::endl << retr.build_log();
+		}
 		
 		return retr;
 		
