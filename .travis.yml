@@ -26,6 +26,7 @@ before_install:
   - sudo add-apt-repository ppa:kylelutz/compute -y
   - sudo apt-get update -q
   - sudo apt-get -y install boost-compute opencl-headers ocl-icd-opencl-dev
+  - sudo cp -r /usr/include/compute/boost/* /usr/include/boost
   - if [ $TRAVIS_OS_NAME = "linux" ]; then
       bash .travis/amd_sdk.sh;
       tar -xjf AMD-SDK.tar.bz2;
@@ -38,5 +39,15 @@ before_install:
       chmod +x ${AMDAPPSDK}/bin/x86_64/clinfo;
       ${AMDAPPSDK}/bin/x86_64/clinfo;
     fi;
+  - sudo rm /usr/bin/g++
+  - if [ $GCC_VERSION = 5 ]; then
+      sudo ln -s /usr/bin/g++-5 /usr/bin/g++;
+    fi;
+  - if [ $GCC_VERSION = 6 ]; then
+      sudo ln -s /usr/bin/g++-6 /usr/bin/g++;
+    fi;
+  - sudo ln -s /usr/include/eigen3/Eigen /usr/include/Eigen
   
-script: SANITIZE_ADDRESS=NO make
+script:
+  - cmake . -DUSE_ADDRESS_SANITIZER=0
+  - make VERBOSE=1

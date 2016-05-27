@@ -4,6 +4,8 @@
 #include <boost/compute.hpp>
 #include <dynfu/cpu_pipeline_value.hpp>
 #include <dynfu/file_system_opencl_program_factory.hpp>
+#include <dynfu/filesystem.hpp>
+#include <dynfu/path.hpp>
 #include <Eigen/Dense>
 #include <algorithm>
 #include <cstddef>
@@ -18,6 +20,18 @@ namespace {
 	class fixture {
 		
 		
+		private:
+		
+			static dynfu::filesystem::path cl_path () {
+				
+				dynfu::filesystem::path retr(dynfu::current_executable_parent_path());
+				retr/="..";
+				retr/="cl";
+				
+				return retr;
+				
+			}
+		
 		protected:
 		
 			boost::compute::device dev;
@@ -30,7 +44,7 @@ namespace {
 			
 		public:
 		
-			fixture () : dev(boost::compute::system::default_device()), ctx(dev), q(ctx,dev), width(4), height(4), fsopf("cl",ctx) {
+			fixture () : dev(boost::compute::system::default_device()), ctx(dev), q(ctx,dev), width(4), height(4), fsopf(cl_path(),ctx) {
 					
 				k << 585.0f, 0.0f, 320.0f,
 					 0.0f, -585.0f, 240.0f,
