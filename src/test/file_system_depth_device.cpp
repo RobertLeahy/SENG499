@@ -10,7 +10,7 @@
 #include <catch.hpp>
 
 
-SCENARIO("file_system_depth_device loads depth information from files in the file system", "[seng499][depth_device][file_system_depth_device]") {
+SCENARIO("file_system_depth_device loads depth information from files in the file system", "[dynfu][depth_device][file_system_depth_device]") {
 	
 	GIVEN("A file_system_depth_device") {
 		

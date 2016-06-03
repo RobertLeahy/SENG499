@@ -10,7 +10,7 @@
 #include <catch.hpp>
 
 
-SCENARIO("msrc_file_system_depth_device loads depth information from MSRC 7Scene files in the file system", "[seng499][depth_device][file_system_depth_device][msrc_file_system_depth_device]") {
+SCENARIO("msrc_file_system_depth_device loads depth information from MSRC 7Scene files in the file system", "[dynfu][depth_device][file_system_depth_device][msrc_file_system_depth_device]") {
 	
 	dynfu::filesystem::path test_data_path(dynfu::current_executable_parent_path());
 	test_data_path/="..";

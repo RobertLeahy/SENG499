@@ -6,7 +6,7 @@
 #include <catch.hpp>
 
 
-SCENARIO("fps_depth_device objects limit the rate at which frames may be acquired", "[seng499][depth_device][fps_depth_device]") {
+SCENARIO("fps_depth_device objects limit the rate at which frames may be acquired", "[dynfu][depth_device][fps_depth_device]") {
 	
 	GIVEN("An fps_depth_device object configured for 30FPS") {
 		

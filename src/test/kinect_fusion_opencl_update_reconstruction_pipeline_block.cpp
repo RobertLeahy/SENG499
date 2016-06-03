@@ -65,7 +65,7 @@ namespace {
 }
 
 
-SCENARIO_METHOD(fixture, "A dynfu::kinect_fusion_opencl_update_reconstruction_pipeline_block implements the update_reconstruction phase of the kinect fusion pipeline on the GPU using OpenCL","[seng499][update_reconstruction_pipeline_block][kinect_fusion_opencl_update_reconstruction_pipeline_block]") {
+SCENARIO_METHOD(fixture, "A dynfu::kinect_fusion_opencl_update_reconstruction_pipeline_block implements the update_reconstruction phase of the kinect fusion pipeline on the GPU using OpenCL","[dynfu][update_reconstruction_pipeline_block][kinect_fusion_opencl_update_reconstruction_pipeline_block]") {
 	
 	GIVEN("A dynfu::kinect_fusion_opencl_update_reconstruction_pipeline_block") {		
 		

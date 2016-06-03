@@ -36,7 +36,7 @@ namespace {
 }
 
 
-SCENARIO_METHOD(fixture,"dynfu::opencl_vector_pipeline_value objects keep the CPU copy up to date with the GPU copy as needed","[seng499][pipeline_value][opencl_pipeline_value][opencl_vector_pipeline_value]") {
+SCENARIO_METHOD(fixture,"dynfu::opencl_vector_pipeline_value objects keep the CPU copy up to date with the GPU copy as needed","[dynfu][pipeline_value][opencl_pipeline_value][opencl_vector_pipeline_value]") {
 	
 	GIVEN("An empty dynfu::opencl_vector_pipeline_value") {
 		
@@ -68,7 +68,7 @@ SCENARIO_METHOD(fixture,"dynfu::opencl_vector_pipeline_value objects keep the CP
 }
 
 
-SCENARIO_METHOD(fixture,"dynfu::opencl_vector_pipeline_value_extractor objects allow pipeline_value objects to be transparently used on the GPU","[seng499][pipeline_value][opencl_vector_pipeline_value_extractor]") {
+SCENARIO_METHOD(fixture,"dynfu::opencl_vector_pipeline_value_extractor objects allow pipeline_value objects to be transparently used on the GPU","[dynfu][pipeline_value][opencl_vector_pipeline_value_extractor]") {
 	
 	GIVEN("A dynfu::opencl_vector_pipeline_value_extractor") {
 		

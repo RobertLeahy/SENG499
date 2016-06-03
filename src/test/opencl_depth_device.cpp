@@ -10,7 +10,7 @@
 #include <catch.hpp>
 
 
-SCENARIO("dynfu::opencl_depth_device objects wrap a dynfu::depth_device and upload its depth frames to the GPU","[seng499][depth_device][opencl_depth_device]") {
+SCENARIO("dynfu::opencl_depth_device objects wrap a dynfu::depth_device and upload its depth frames to the GPU","[dynfu][depth_device][opencl_depth_device]") {
 	
 	GIVEN("A dynfu::opencl_depth_device which wraps a dynfu::depth_device which does not upload its depth frames to the GPU") {
 		

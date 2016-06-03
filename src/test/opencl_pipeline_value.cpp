@@ -57,7 +57,7 @@ namespace {
 }
 
 
-SCENARIO_METHOD(fixture,"dynfu::opencl_pipeline_value tracks the association between a GPU pipeline value and its boost::compute::command_queue","[seng499][pipeline_value][opencl_pipeline_value]") {
+SCENARIO_METHOD(fixture,"dynfu::opencl_pipeline_value tracks the association between a GPU pipeline value and its boost::compute::command_queue","[dynfu][pipeline_value][opencl_pipeline_value]") {
 	
 	GIVEN("A dynfu::opencl_pipeline_value created with some boost::compute::command_queue") {
 		

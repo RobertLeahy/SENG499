@@ -58,7 +58,7 @@ namespace {
 }
 
 
-SCENARIO_METHOD(fixture, "A dynfu::kinect_fusion_opencl_measurement_pipeline_block implements the measurement phase of the kinect fusion pipeline on the GPU using OpenCL","[seng499][measurement_pipeline_block][kinect_fusion_opencl_measurement_pipeline_block]") {
+SCENARIO_METHOD(fixture, "A dynfu::kinect_fusion_opencl_measurement_pipeline_block implements the measurement phase of the kinect fusion pipeline on the GPU using OpenCL","[dynfu][measurement_pipeline_block][kinect_fusion_opencl_measurement_pipeline_block]") {
 	
 	GIVEN("A dynfu::kinect_fusion_opencl_measurement_pipeline_block") {		
 		
