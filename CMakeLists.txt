@@ -81,6 +81,7 @@ add_library(dynfu SHARED
 	src/opencl_build_error.cpp
 	src/opencl_depth_device.cpp
 	src/opencl_program_factory.cpp
+	src/opencv_depth_device.cpp
 	src/path.cpp
 	src/pose_estimation_pipeline_block.cpp
 	src/surface_prediction_pipeline_block.cpp
@@ -105,6 +106,7 @@ add_executable(tests
 	src/test/opencl_depth_device.cpp
 	src/test/opencl_pipeline_value.cpp
 	src/test/opencl_vector_pipeline_value.cpp
+	src/test/opencv_depth_device.cpp
 )
 target_link_libraries(tests dynfu)
 
