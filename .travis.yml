@@ -79,6 +79,10 @@ before_install:
       cmake .;
       make -j4;
       sudo make install;
+      cd ${HOME};
+      wget -O ippicv_linux_20141027.tgz https://sourceforge.net/projects/opencvlibrary/files/3rdparty/ippicv/ippicv_linux_20141027.tgz;
+      tar -xzvf ippicv_linux_20141027.tgz;
+      sudo cp ippicv_lnx/lib/intel64/* /usr/local/lib;
       cd ${TRAVIS_BUILD_DIR};
     fi;
 
