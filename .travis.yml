@@ -65,6 +65,17 @@ before_install:
         sudo ln -s /usr/bin/g++-6 /usr/bin/g++;
       fi;
       sudo ln -s /usr/include/eigen3/Eigen /usr/include/Eigen;
+      cd ${HOME};
+      pwd;
+      mkdir -p OpenCV;
+      cd OpenCV;
+      wget https://github.com/Itseez/opencv/archive/3.1.0.zip;
+      unzip -q 3.1.0.zip;
+      cd opencv-3.1.0;
+      cmake .;
+      make -j4;
+      make install;
+      cd ${HOME};
     fi;
 
   - if [ $TRAVIS_OS_NAME = "osx" ]; then
