@@ -74,7 +74,7 @@ before_install:
       cd opencv-3.1.0;
       cmake .;
       make -j4;
-      make install;
+      sudo make install;
       cd ${HOME};
     fi;
 
