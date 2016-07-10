@@ -79,7 +79,7 @@ before_install:
       cmake .;
       make -j4;
       sudo make install;
-      cd ${HOME};
+      cd ${TRAVIS_BUILD_DIR};
     fi;
 
   - if [ $TRAVIS_OS_NAME = "osx" ]; then
