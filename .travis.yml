@@ -57,12 +57,7 @@ before_install:
       chmod +x ${AMDAPPSDK}/bin/x86_64/clinfo;
       ${AMDAPPSDK}/bin/x86_64/clinfo;
       sudo rm /usr/bin/g++;
-      if [ $GCC_VERSION = 5 ]; then
-        sudo ln -s /usr/bin/g++-5 /usr/bin/g++;
-      fi;
-      if [ $GCC_VERSION = 6 ]; then
-        sudo ln -s /usr/bin/g++-6 /usr/bin/g++;
-      fi;
+      sudo ln -s /usr/bin/g++-5 /usr/bin/g++;
       sudo ln -s /usr/include/eigen3/Eigen /usr/include/Eigen;
       cd ${HOME};
       pwd;
@@ -83,6 +78,10 @@ before_install:
       tar -xzvf ippicv_linux_20141027.tgz;
       sudo cp ippicv_lnx/lib/intel64/* /usr/lib;
       cd ${TRAVIS_BUILD_DIR};
+      if [ $GCC_VERSION = 6 ]; then
+        sudo rm /usr/bin/g++;
+        sudo ln -s /usr/bin/g++-6 /usr/bin/g++;
+      fi;
     fi;
 
   - if [ $TRAVIS_OS_NAME = "osx" ]; then
