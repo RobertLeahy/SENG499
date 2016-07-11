@@ -44,7 +44,7 @@ before_install:
       curl -o include/catch.hpp https://raw.githubusercontent.com/philsquared/Catch/master/single_include/catch.hpp;
       sudo add-apt-repository ppa:kylelutz/compute -y;
       sudo apt-get update -q;
-      sudo apt-get -y install boost-compute opencl-headers ocl-icd-opencl-dev libdc1394-22-dev libavcodec-dev libavformat-dev libswscale-dev libtheora-dev libvorbis-dev libxvidcore-dev libx264-dev yasm libopencore-amrnb-dev libopencore-amrwb-dev libv4l-dev libxine2-dev zlib1g-dev libjpeg-dev libwebp-dev libpng-dev libtiff5-dev libjasper-dev libopenexr-dev libgdal-dev qt5-default libvtk6-dev libtbb-dev;
+      sudo apt-get -y install boost-compute opencl-headers ocl-icd-opencl-dev libdc1394-22-dev libavcodec-dev libavformat-dev libswscale-dev libtheora-dev libvorbis-dev libxvidcore-dev libx264-dev yasm libopencore-amrnb-dev libopencore-amrwb-dev libv4l-dev libxine2-dev zlib1g-dev libjpeg-dev libwebp-dev libpng-dev libtiff5-dev libjasper-dev libopenexr-dev libgdal-dev qt5-default libvtk6-dev libtbb-dev libgtk-3-dev;
       sudo cp -r /usr/include/compute/boost/* /usr/include/boost;
       bash .travis/amd_sdk.sh;
       tar -xjf AMD-SDK.tar.bz2;
