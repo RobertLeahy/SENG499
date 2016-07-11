@@ -70,7 +70,7 @@ before_install:
         unzip -q 3.1.0.zip;
       fi;
       cd opencv-3.1.0;
-      cmake -D CMAKE_INSTALL_PREFIX=/usr .;
+      cmake .;
       make -j4;
       sudo make install;
       cd ${HOME};
@@ -82,6 +82,7 @@ before_install:
         sudo rm /usr/bin/g++;
         sudo ln -s /usr/bin/g++-6 /usr/bin/g++;
       fi;
+      export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib;
     fi;
 
   - if [ $TRAVIS_OS_NAME = "osx" ]; then
