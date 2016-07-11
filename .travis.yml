@@ -36,7 +36,6 @@ addons: &gcc5
       - g++-6
       - libeigen3-dev 
       - libboost-all-dev
-      - libopencv-dev
     sources:
       - ubuntu-toolchain-r-test
 before_install:
@@ -45,7 +44,7 @@ before_install:
       curl -o include/catch.hpp https://raw.githubusercontent.com/philsquared/Catch/master/single_include/catch.hpp;
       sudo add-apt-repository ppa:kylelutz/compute -y;
       sudo apt-get update -q;
-      sudo apt-get -y install boost-compute opencl-headers ocl-icd-opencl-dev;
+      sudo apt-get -y install boost-compute opencl-headers ocl-icd-opencl-dev libdc1394-22-dev libavcodec-dev libavformat-dev libswscale-dev libtheora-dev libvorbis-dev libxvidcore-dev libx264-dev yasm libopencore-amrnb-dev libopencore-amrwb-dev libv4l-dev libxine2-dev zlib1g-dev libjpeg-dev libwebp-dev libpng-dev libtiff5-dev libjasper-dev libopenexr-dev libgdal-dev qt5-default libvtk6-dev libtbb-dev libgtk-3-dev;
       sudo cp -r /usr/include/compute/boost/* /usr/include/boost;
       bash .travis/amd_sdk.sh;
       tar -xjf AMD-SDK.tar.bz2;
@@ -58,13 +57,32 @@ before_install:
       chmod +x ${AMDAPPSDK}/bin/x86_64/clinfo;
       ${AMDAPPSDK}/bin/x86_64/clinfo;
       sudo rm /usr/bin/g++;
-      if [ $GCC_VERSION = 5 ]; then
-        sudo ln -s /usr/bin/g++-5 /usr/bin/g++;
+      sudo ln -s /usr/bin/g++-5 /usr/bin/g++;
+      sudo ln -s /usr/include/eigen3/Eigen /usr/include/Eigen;
+      cd ${HOME};
+      pwd;
+      mkdir -p OpenCV;
+      cd OpenCV;
+      if [ ! -e "3.1.0.zip" ]; then
+        wget https://github.com/Itseez/opencv/archive/3.1.0.zip;
       fi;
+      if [ ! -e "opencv-3.1.0" ]; then
+        unzip -q 3.1.0.zip;
+      fi;
+      cd opencv-3.1.0;
+      cmake .;
+      make -j4;
+      sudo make install;
+      cd ${HOME};
+      wget -O ippicv_linux_20141027.tgz https://sourceforge.net/projects/opencvlibrary/files/3rdparty/ippicv/ippicv_linux_20141027.tgz;
+      tar -xzvf ippicv_linux_20141027.tgz;
+      sudo cp ippicv_lnx/lib/intel64/* /usr/lib;
+      cd ${TRAVIS_BUILD_DIR};
       if [ $GCC_VERSION = 6 ]; then
+        sudo rm /usr/bin/g++;
         sudo ln -s /usr/bin/g++-6 /usr/bin/g++;
       fi;
-      sudo ln -s /usr/include/eigen3/Eigen /usr/include/Eigen;
+      export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib;
     fi;
 
   - if [ $TRAVIS_OS_NAME = "osx" ]; then
