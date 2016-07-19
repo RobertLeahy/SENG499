@@ -1,6 +1,6 @@
 #define KINECT_MAX_DIST (8.0f)
 #define KINECT_MIN_DIST (0.4f)
-#define STEP_SIZE (0.002f)
+#define STEP_SIZE (0.08f)
 
 
 float getTsdfValue (const int3 vox, const __global float * tsdf, const size_t size) {
@@ -194,12 +194,20 @@ float triLerp (const float3 p, const __global float * tsdf, const float extent, 
 
         float t_star = dist - (STEP_SIZE * ft) / (ftdt - ft);
 
-        if (!isVoxelValidAndOffBorder(getVoxel(last, extent, tsdf_size), tsdf_size, 2)) break;
-
         //  Store computed vertex position
         float3 v = camera_pos + (ray_dir * t_star);
         vstore3(v, idx, vmap);
 
+        //  Check to see if we can even compute a normal
+        if (!isVoxelValidAndOffBorder(getVoxel(last, extent, tsdf_size), tsdf_size, 2)) {
+
+            vstore3(NAN, idx, nmap);
+            return;
+
+        }
+
+        //  Compute a normal by computing partial derivatives
+        //  along all three axes
         float3 t = v;
         t.x += cell_size;
         float fx1 = triLerp(t, tsdf, extent, tsdf_size);
@@ -221,8 +229,11 @@ float triLerp (const float3 p, const __global float * tsdf, const float extent, 
         t.z -= cell_size;
         float fz2 = triLerp(t, tsdf, extent, tsdf_size);
 
+        //  We only store the normal if it's not the null vector
+        //  otherwise we store NaN
         float3 n = (float3) (fx1 - fx2, fy1 - fy2, fz1 - fz2);
-        vstore3(normalize(n), idx, nmap);
+        float3 nullv = (float3)(0, 0, 0);
+        vstore3((n == nullv) ? NAN : normalize(n), idx, nmap);
 
         return;
 
