@@ -6,7 +6,6 @@
 #include <memory>
 #include <utility>
 
-#include <iostream>
 
 namespace dynfu {
 	
@@ -61,7 +60,6 @@ namespace dynfu {
 		if (t_g_k_ != t_g_k) {
 			
 			t_g_k_ = t_g_k;
-			std::cout << "t_g_k_" << std::endl << *t_g_k_ << std::endl;
 			t_g_k.transposeInPlace();
 			q.enqueue_write_buffer(t_g_k_buf_, 0, sizeof(t_g_k), t_g_k.data());
 		
