@@ -1,24 +1,22 @@
 #include <dynfu/kinect_fusion_opencl_surface_prediction_pipeline_block.hpp>
+
+
+#include <boost/compute.hpp>
+#include <dynfu/cpu_pipeline_value.hpp>
 #include <dynfu/kinect_fusion_opencl_update_reconstruction_pipeline_block.hpp>
 #include <dynfu/msrc_file_system_depth_device.hpp>
 #include <dynfu/file_system_depth_device.hpp>
 #include <dynfu/file_system_opencl_program_factory.hpp>
 #include <dynfu/opencl_depth_device.hpp>
-#include <boost/compute.hpp>
-#include <dynfu/cpu_pipeline_value.hpp>
 #include <dynfu/filesystem.hpp>
 #include <dynfu/path.hpp>
-#include <dynfu/file_system_opencl_program_factory.hpp>
 #include <Eigen/Dense>
 #include <algorithm>
 #include <cstddef>
-#include <iostream>
+#include <cmath>
 #include <tuple>
 #include <utility>
 #include <vector>
-
-#include <igl/viewer/Viewer.h>
-
 #include <catch.hpp>
 
 
@@ -77,11 +75,11 @@ namespace {
 }
 
 
-SCENARIO_METHOD(fixture, "A dynfu::kinect_fusion_opencl_surface_prediction_pipeline_block implements the surface_prediction phase of the kinect fusion pipeline on the GPU using OpenCL","[dynfu][surface_prediction_pipeline_block][kinect_fusion_opencl_surface_prediction_pipeline_block]") {
+SCENARIO_METHOD(fixture, "A dynfu::kinect_fusion_opencl_surface_prediction_pipeline_block implements the surface prediction phase of the kinect fusion pipeline on the GPU using OpenCL","[dynfu][surface_prediction_pipeline_block][kinect_fusion_opencl_surface_prediction_pipeline_block]") {
 
 	GIVEN("A dynfu::kinect_fusion_opencl_ruface_prediction_pipeline_block") {
 
-		float mu = 5.0;
+		float mu = 0.1f;
 
 		dynfu::kinect_fusion_opencl_update_reconstruction_pipeline_block kfourpb(q, fsopf, mu, tsdf_width, tsdf_height, tsdf_depth);
 		dynfu::kinect_fusion_opencl_surface_prediction_pipeline_block kfosppb(q, fsopf, mu, tsdf_width);
@@ -100,63 +98,23 @@ SCENARIO_METHOD(fixture, "A dynfu::kinect_fusion_opencl_surface_prediction_pipel
 
 		auto && tsdf=kfourpb(*dd(), width, height, k, t_g_k);
 
-		THEN("Invoking it and downloading the produced V and N maps does not fail") {
+		THEN("Invoking it and downloading the produced V and N maps does not fail and produces V and N maps which are remotely sane") {
 
-			auto f = [&](){
+			auto && vnmap = kfosppb(std::move(tsdf), k, t_g_k);
+			auto && v=std::get<0>(vnmap);
+			auto && n=std::get<1>(vnmap);
+			auto && vs=v->get();
+			auto && ns=n->get();
 
-
-					auto && vnmap = kfosppb(std::move(tsdf), k, t_g_k);
-					auto && v=std::get<0>(vnmap);
-					auto && n=std::get<1>(vnmap);
-					auto && vs=v->get();
-					auto && ns=n->get();
-
-
-					Eigen::MatrixXd V(640*480,3);
-
-					std::size_t nans(0);
-					std::size_t i(0);
-					for (auto && vertex : vs) {
-						V.row(i++) = vertex.cast<double>();
-						if (std::isnan(vertex[0])) ++nans;
-						if (i%100==0) std::cout << i << "/" << 640*480 << std::endl;
-					}
-
-					std::cout << "# of Nans:" << nans << std::endl;
-
-					igl::viewer::Viewer viewer;
-					viewer.data.add_points(V,Eigen::RowVector3d(1.0f,0.0f,0.0f));
-
-					viewer.data.add_points(Eigen::RowVector3d(1.5,1.5,1.5), Eigen::RowVector3d(0.0f,0.0f,1.0f) );
-
-					Eigen::MatrixXd to(3,3);
-					to <<
-					1,0,0,
-					0,1,0,
-					0,0,1;
-					Eigen::MatrixXd color(3,3);
-					color<<
-					1,0,0,
-					0,1,0,
-					0,0,1;
-
-					Eigen::RowVector3d z(0,0,0);
-					for (unsigned i = 0; i < 3; i++) {
-					
-						viewer.data.add_edges(z, to.row(i), color.row(i));
-
-					}
-
-
-					viewer.launch();
-
-					
-
-
-
-			};
-
-			CHECK_NOTHROW(f());
+			Eigen::Vector3f nullv(0,0,0);
+			auto nan=[] (const auto & v) noexcept {	return std::isnan(v(0)) || std::isnan(v(1)) || std::isnan(v(2));	};
+			auto not_nan=[&] (const auto & v) noexcept {	return !nan(v);	};
+			auto nulls=std::count_if(ns.begin(),ns.end(),[&] (const auto & n) noexcept {	return not_nan(n) && (n==nullv);	});
+			CHECK(nulls==0);
+			auto non_nan_v=std::count_if(vs.begin(),vs.end(),not_nan);
+			CHECK(non_nan_v>0);
+			auto non_nan_n=std::count_if(ns.begin(),ns.end(),not_nan);
+			CHECK(non_nan_n>0);
 
 		}
 
