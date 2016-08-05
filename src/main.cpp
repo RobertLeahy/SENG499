@@ -8,7 +8,6 @@
 #include <dynfu/kinect_fusion_opencl_surface_prediction_pipeline_block.hpp>
 #include <dynfu/kinect_fusion_opencl_measurement_pipeline_block.hpp>
 #include <dynfu/kinect_fusion_opencl_pose_estimation_pipeline_block.hpp>
-#include <dynfu/kinect_fusion_eigen_pose_estimation_pipeline_block.hpp>
 #include <dynfu/kinect_fusion_opencl_update_reconstruction_pipeline_block.hpp>
 #include <dynfu/libigl.hpp>
 #include <dynfu/msrc_file_system_depth_device.hpp>

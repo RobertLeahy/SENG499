@@ -6,6 +6,7 @@
 #pragma once
 
 
+#include <dynfu/high_resolution_clock.hpp>
 #include <chrono>
 
 
@@ -102,10 +103,10 @@ namespace dynfu {
 	
 	
 	/**
-	 *	A \ref basic_timer which uses std::chrono::high_resolution_clock
+	 *	A \ref basic_timer which uses \ref high_resolution_clock
 	 *	as its clock.
 	 */
-	using timer=basic_timer<std::chrono::high_resolution_clock>;
+	using timer=basic_timer<high_resolution_clock>;
 	
 	
 }

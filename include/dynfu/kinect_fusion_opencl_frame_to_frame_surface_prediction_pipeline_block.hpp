@@ -38,8 +38,7 @@ namespace dynfu {
 				std::size_t,
 				pose_estimation_pipeline_block::value_type::element_type &,
 				Eigen::Matrix3f,
-				measurement_pipeline_block::vertex_value_type::element_type &,
-				measurement_pipeline_block::normal_value_type::element_type &,
+				measurement_pipeline_block::value_type::element_type &,
 				value_type
 			) override;
 

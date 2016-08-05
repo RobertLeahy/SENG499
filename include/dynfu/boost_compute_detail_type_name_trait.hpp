@@ -7,6 +7,7 @@
 
 
 #include <boost/compute.hpp>
+#include <dynfu/pixel.hpp>
 #include <Eigen/Dense>
 
 
@@ -27,6 +28,20 @@ namespace boost {
 				static const char * value () noexcept {
 					
 					return "Eigen::Vector3f";
+					
+				}
+				
+				
+			};
+
+
+			template <>
+			struct type_name_trait<dynfu::pixel> {
+				
+				
+				static const char * value () noexcept {
+					
+					return "dynfu::pixel";
 					
 				}
 				

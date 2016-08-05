@@ -1,7 +1,6 @@
 #include <dynfu/kinect_fusion.hpp>
 #include <Eigen/Dense>
 #include <stdexcept>
-#include <tuple>
 #include <utility>
 
 
@@ -29,15 +28,13 @@ namespace dynfu {
 	}
 	
 	
-	void kinect_fusion::get_vertex_and_normal_maps () {
+	void kinect_fusion::get_vertex_and_normal_map () {
 		
-		dynfu::measurement_pipeline_block::vertex_value_type v;
-		dynfu::measurement_pipeline_block::normal_value_type n;
+		dynfu::measurement_pipeline_block::value_type map;
 		using std::swap;
-		swap(v,v_);
-		swap(n,n_);
+		swap(map,map_);
 		timer t;
-		std::tie(v_,n_)=(*mpb_)(*frame_,width_,height_,k_,std::make_tuple(std::move(v),std::move(n)));
+		map_=(*mpb_)(*frame_,width_,height_,k_,std::move(map));
 		mpbt_=t.elapsed();
 		
 	}
@@ -49,7 +46,7 @@ namespace dynfu {
 		using std::swap;
 		swap(t_g_k,t_g_k_);
 		timer t;
-		t_g_k_=(*pepb_)(*v_,*n_,prev_v_.get(),prev_n_.get(),k_,std::move(t_g_k));
+		t_g_k_=(*pepb_)(*map_,prev_map_.get(),k_,std::move(t_g_k));
 		pepbt_=t.elapsed();
 
 	}
@@ -69,13 +66,11 @@ namespace dynfu {
 
 	void kinect_fusion::get_prediction () {
 
-		dynfu::surface_prediction_pipeline_block::vertex_value_type v;
-		dynfu::surface_prediction_pipeline_block::normal_value_type n;
+		dynfu::surface_prediction_pipeline_block::value_type map;
 		using std::swap;
-		swap(v,prev_v_);
-		swap(n,prev_n_);
+		swap(map,prev_map_);
 		timer t;
-		std::tie(prev_v_,prev_n_)=(*sppb_)(*tsdf_.buffer,tsdf_.width,tsdf_.height,tsdf_.depth,*t_g_k_,k_,*v_,*n_,std::make_tuple(std::move(v),std::move(n)));
+		prev_map_=(*sppb_)(*tsdf_.buffer,tsdf_.width,tsdf_.height,tsdf_.depth,*t_g_k_,k_,*map_,std::move(map));
 		sppbt_=t.elapsed();
 
 	}
@@ -137,7 +132,7 @@ namespace dynfu {
 		check_pipeline();
 		
 		get_frame();
-		get_vertex_and_normal_maps();
+		get_vertex_and_normal_map();
 		get_tgk();
 		get_tsdf();
 		get_prediction();
@@ -187,16 +182,9 @@ namespace dynfu {
 	}
 
 
-	measurement_pipeline_block::vertex_value_type::element_type & kinect_fusion::vertex_map () const noexcept {
+	measurement_pipeline_block::value_type::element_type & kinect_fusion::vertex_and_normal_map () const noexcept {
 
-		return *v_;
-
-	}
-
-
-	measurement_pipeline_block::normal_value_type::element_type & kinect_fusion::normal_map () const noexcept {
-
-		return *n_;
+		return *map_;
 
 	}
 
@@ -236,16 +224,9 @@ namespace dynfu {
 	}
 
 
-	surface_prediction_pipeline_block::vertex_value_type::element_type & kinect_fusion::predicted_vertex_map () const noexcept {
+	surface_prediction_pipeline_block::value_type::element_type & kinect_fusion::predicted_vertex_and_normal_map () const noexcept {
 
-		return *prev_v_;
-
-	}
-
-
-	surface_prediction_pipeline_block::normal_value_type::element_type & kinect_fusion::predicted_normal_map () const noexcept {
-
-		return *prev_n_;
+		return *prev_map_;
 
 	}
 	

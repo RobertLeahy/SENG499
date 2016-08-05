@@ -2,6 +2,7 @@
 #include <dynfu/boost_compute_detail_type_name_trait.hpp>
 #include <dynfu/opencl_vector_pipeline_value.hpp>
 #include <dynfu/kinect_fusion_opencl_frame_to_frame_surface_prediction_pipeline_block.hpp>
+#include <dynfu/pixel.hpp>
 #include <Eigen/Dense>
 #include <memory>
 #include <tuple>
@@ -21,34 +22,23 @@ namespace dynfu {
 		std::size_t,
 		pose_estimation_pipeline_block::value_type::element_type &,
 		Eigen::Matrix3f,
-		measurement_pipeline_block::vertex_value_type::element_type & v,
-		measurement_pipeline_block::normal_value_type::element_type & n,
+		measurement_pipeline_block::value_type::element_type & prev,
 		value_type vn
 	) {
 
-		auto && prev_v_ptr=std::get<0>(vn);
-		using v_type=opencl_vector_pipeline_value<Eigen::Vector3f>;
-		if (!prev_v_ptr) prev_v_ptr=std::make_unique<v_type>(q_);
-		auto && prev_v=dynamic_cast<v_type &>(*prev_v_ptr);
-		auto && prev_v_vec=prev_v.vector();
-		auto && prev_n_ptr=std::get<1>(vn);
-		using n_type=opencl_vector_pipeline_value<Eigen::Vector3f>;
-		if (!prev_n_ptr) prev_n_ptr=std::make_unique<n_type>(q_);
-		auto && prev_n=dynamic_cast<n_type &>(*prev_n_ptr);
-		auto && prev_n_vec=prev_n.vector();
+		using v_type=opencl_vector_pipeline_value<dynfu::pixel>;
+		if (!vn) vn=std::make_unique<v_type>(q_);
+		auto && pv=dynamic_cast<v_type &>(*vn);
+		auto && buffer=pv.vector();
 
-		opencl_vector_pipeline_value_extractor<Eigen::Vector3f> v_e(q_);
-		auto && vertices=v_e(v);
-		opencl_vector_pipeline_value_extractor<Eigen::Vector3f> n_e(q_);
-		auto && normals=n_e(n);
+		opencl_vector_pipeline_value_extractor<dynfu::pixel> e(q_);
+		auto && map=e(prev);
 
-		prev_v_vec.resize(vertices.size(),q_);
-		prev_n_vec.resize(normals.size(),q_);
+		buffer.resize(map.size(),q_);
 
-		boost::compute::copy(vertices.begin(),vertices.end(),prev_v_vec.begin(),q_);
-		boost::compute::copy(normals.begin(),normals.end(),prev_n_vec.begin(),q_);
+		boost::compute::copy(map.begin(),map.end(),buffer.begin(),q_);
 
-		return std::make_tuple(std::move(prev_v_ptr),std::move(prev_n_ptr));
+		return vn;
 
 	}
 

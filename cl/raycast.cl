@@ -88,8 +88,7 @@ float triLerp (const float3 p, const __global float * tsdf, const float extent, 
  *	Params:
  *
  *  tsdf - TSDF indexed in the normal way
- *  vmap - Vertex map output
- *  nmap - Normal map output
+ *  map - Map output
  *  T_g_k - The T_g_k matrix
  *  Kinv - The inverse K matrix
  *  mu - The TSDF truncation distance
@@ -98,20 +97,20 @@ float triLerp (const float3 p, const __global float * tsdf, const float extent, 
  *  frame_width - The width of the depth frame
  */
  kernel void raycast(
-    const __global float * tsdf,
-    __global float * vmap,
-    __global float * nmap,
-    const __global float * T_g_k,
-    const __global float * Kinv,
-    const float mu,
-    const float extent,
-    const unsigned int tsdf_size,
-    const unsigned int frame_width
+    const __global float * tsdf,    //  0
+    __global float * map,   //  1
+    const __global float * T_g_k,   //  2
+    const __global float * Kinv,    //  3
+    const float mu, //  4
+    const float extent, //  5
+    const unsigned int tsdf_size    //  6
  ) {
 
 	size_t u = get_global_id(0);
+    size_t frame_width = get_global_size(0);
 	size_t v = get_global_id(1);
     size_t idx = (v * frame_width) + u;
+    idx *= 2U;
 
     //  This is where the camera is in world space
     float3 camera_pos = (float3)(T_g_k[3], T_g_k[7], T_g_k[11]);
@@ -149,8 +148,8 @@ float triLerp (const float3 p, const __global float * tsdf, const float extent, 
     int3 vox = getVoxel(initial_ray, extent, tsdf_size);
     if (!isVoxelValid(vox, tsdf_size)) {
 
-        vstore3(NAN, idx, vmap);
-        vstore3(NAN, idx, nmap);
+        vstore3(NAN, idx, map);
+        vstore3(NAN, idx + 1U, map);
 
         return;
 
@@ -193,12 +192,12 @@ float triLerp (const float3 p, const __global float * tsdf, const float extent, 
 
         //  Store computed vertex position
         float3 v = initial_ray + (ray_dir * t_star);
-        vstore3(v, idx, vmap);
+        vstore3(v, idx, map);
 
         //  Check to see if we can even compute a normal
         if (!isVoxelValidAndOffBorder(getVoxel(last, extent, tsdf_size), tsdf_size, 2)) {
 
-            vstore3(NAN, idx, nmap);
+            vstore3(NAN, idx + 1U, map);
             return;
 
         }
@@ -230,14 +229,14 @@ float triLerp (const float3 p, const __global float * tsdf, const float extent, 
         //  otherwise we store NaN
         float3 n = (float3) (fx1 - fx2, fy1 - fy2, fz1 - fz2);
         float3 nullv = (float3)(0, 0, 0);
-        vstore3((n == nullv) ? NAN : normalize(n), idx, nmap);
+        vstore3((n == nullv) ? NAN : normalize(n), idx + 1U, map);
 
         return;
 
     }
 
-    vstore3(NAN, idx, vmap);
-    vstore3(NAN, idx, nmap);
+    vstore3(NAN, idx, map);
+    vstore3(NAN, idx + 1U, map);
 
 }
 

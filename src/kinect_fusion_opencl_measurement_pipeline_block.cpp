@@ -85,26 +85,20 @@ namespace dynfu {
 		bilateral_kernel_.set_arg(5,std::uint32_t(height));	//	TODO: Make sure this doesn't overflow?
 		std::size_t extent []={width,height};
 		q.enqueue_nd_range_kernel(bilateral_kernel_,2,nullptr,extent,nullptr);
-		
-		auto && vertices_ptr=std::get<0>(v);
-		auto && normals_ptr=std::get<1>(v);
-		using type=opencl_vector_pipeline_value<Eigen::Vector3f>;
-		if (!vertices_ptr) vertices_ptr=std::make_unique<type>(q);
-		if (!normals_ptr) normals_ptr=std::make_unique<type>(q);
-		auto && vertices=dynamic_cast<type &>(*vertices_ptr).vector();
-		auto && normals=dynamic_cast<type &>(*normals_ptr).vector();
-		vertices.resize(s,q);
-		normals.resize(s,q);
+
+		using pv_type=opencl_vector_pipeline_value<map_type::value_type>;
+		if (!v) v=std::make_unique<pv_type>(q);
+		auto && pv=dynamic_cast<pv_type &>(*v);
+		auto && map=pv.vector();
+		map.resize(s,q);
 		
 		//	Vertex map
 		//
 		//	Kernel arguments are:
 		//
 		//	0:	Source (bilaterally filtered image)
-		//	1:	Destination
+		//	1:	Destination (map)
 		//	2:	K^-1
-		//	3:	Width
-		//	4:	Height
 		if (k_!=k) {
 			
 			Eigen::Matrix3f k_inv=k.inverse();
@@ -115,23 +109,15 @@ namespace dynfu {
 		}
 		
 		v_kernel_.set_arg(0,v_);
-		v_kernel_.set_arg(1,vertices);
-		v_kernel_.set_arg(3,std::uint32_t(width));
-		v_kernel_.set_arg(4,std::uint32_t(height));
+		v_kernel_.set_arg(1,map);
 		q.enqueue_nd_range_kernel(v_kernel_,2,nullptr,extent,nullptr);
 		
 		//	Normal map
 		//
 		//	Kernel arguments are:
 		//
-		//	0:	Source (vertex map)
-		//	1:	Destination
-		//	2:	Width
-		//	3:	Height
-		n_kernel_.set_arg(0,vertices);
-		n_kernel_.set_arg(1,normals);
-		n_kernel_.set_arg(2,std::uint32_t(width));
-		n_kernel_.set_arg(3,std::uint32_t(height));
+		//	0:	Map
+		n_kernel_.set_arg(0,map);
 		q.enqueue_nd_range_kernel(n_kernel_,2,nullptr,extent,nullptr);
 		
 		return v;

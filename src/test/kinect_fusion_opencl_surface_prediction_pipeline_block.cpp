@@ -75,6 +75,13 @@ namespace {
 }
 
 
+static bool is_nan (const Eigen::Vector3f & v) noexcept {
+
+	return std::isnan(v(0)) && std::isnan(v(1)) && std::isnan(v(2));
+
+}
+
+
 SCENARIO_METHOD(fixture, "A dynfu::kinect_fusion_opencl_surface_prediction_pipeline_block implements the surface prediction phase of the kinect fusion pipeline on the GPU using OpenCL","[dynfu][surface_prediction_pipeline_block][kinect_fusion_opencl_surface_prediction_pipeline_block]") {
 
 	GIVEN("A dynfu::kinect_fusion_opencl_ruface_prediction_pipeline_block") {
@@ -102,24 +109,17 @@ SCENARIO_METHOD(fixture, "A dynfu::kinect_fusion_opencl_surface_prediction_pipel
 
 		THEN("Invoking it and downloading the produced V and N maps does not fail and produces V and N maps which are remotely sane") {
 
-			dynfu::cpu_pipeline_value<std::vector<Eigen::Vector3f>> prev_v;
-			prev_v.emplace();
-			dynfu::cpu_pipeline_value<std::vector<Eigen::Vector3f>> prev_n;
-			prev_n.emplace();
-			auto && vnmap = kfosppb(*tsdf.buffer, tsdf.width, tsdf.height, tsdf.depth, t_g_k_pv, k, prev_v, prev_n, {});
-			auto && v=std::get<0>(vnmap);
-			auto && n=std::get<1>(vnmap);
-			auto && vs=v->get();
-			auto && ns=n->get();
+			dynfu::cpu_pipeline_value<std::vector<dynfu::pixel>> prev;
+			prev.emplace();
+			auto ptr = kfosppb(*tsdf.buffer, tsdf.width, tsdf.height, tsdf.depth, t_g_k_pv, k, prev, {});
+			auto && map=ptr->get();
 
 			Eigen::Vector3f nullv(0,0,0);
-			auto nan=[] (const auto & v) noexcept {	return std::isnan(v(0)) || std::isnan(v(1)) || std::isnan(v(2));	};
-			auto not_nan=[&] (const auto & v) noexcept {	return !nan(v);	};
-			auto nulls=std::count_if(ns.begin(),ns.end(),[&] (const auto & n) noexcept {	return not_nan(n) && (n==nullv);	});
+			auto nulls=std::count_if(map.begin(),map.end(),[&] (const auto & p) noexcept {	return !is_nan(p.n) && (p.n==nullv);	});
 			CHECK(nulls==0);
-			auto non_nan_v=std::count_if(vs.begin(),vs.end(),not_nan);
+			auto non_nan_v=std::count_if(map.begin(),map.end(),[&] (const auto & p) noexcept {	return !is_nan(p.v);	});
 			CHECK(non_nan_v>0);
-			auto non_nan_n=std::count_if(ns.begin(),ns.end(),not_nan);
+			auto non_nan_n=std::count_if(map.begin(),map.end(),[&] (const auto & p) noexcept {	return !is_nan(p.n);	});
 			CHECK(non_nan_n>0);
 
 		}
