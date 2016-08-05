@@ -62,20 +62,13 @@ namespace dynfu {
 			 *	against the previously predicted vertex and normal
 			 *	maps.
 			 *
-			 *	\param [in] v
-			 *		A \ref pipeline_value which represents the vertex map
-			 *		calculated for the current frame.
-			 *	\param [in] n
-			 *		A \ref pipeline_value which represents the normal map
-			 *		calculated for the current frame.
-			 *	\param [in] prev_v
+			 *	\param [in] map
+			 *		A \ref pipeline_value which represents the vertex and
+			 *		normal maps calculated for the current frame.
+			 *	\param [in] prev_map
 			 *		A pointer to a \ref pipeline_value which represents
-			 *		the previous frame's simulated vertex map.  This
-			 *		pointer shall be \em nullptr for the first frame.
-			 *	\param [in] prev_n
-			 *		A pointer to a \ref pipeline_value which represents
-			 *		the previous frame's simulated normal map.  This
-			 *		pointer shall be \em nullptr for the first frame.	
+			 *		the previous frame's simulated vertex and normal maps.
+			 *		This pointer shall be \em nullptr for the first frame.
 			 *	\param [in] k
 			 *		Camera calibration matrix.
 			 *	\param [in] t_gk_minus_one
@@ -92,10 +85,8 @@ namespace dynfu {
 			 *		pose estimation, \f$T_{g,k}\f$.
 			 */
 			virtual value_type operator () (
-				measurement_pipeline_block::vertex_value_type::element_type & v,
-				measurement_pipeline_block::normal_value_type::element_type & n,
-				measurement_pipeline_block::vertex_value_type::element_type * prev_v,
-				measurement_pipeline_block::normal_value_type::element_type * prev_n,
+				measurement_pipeline_block::value_type::element_type & map,
+				measurement_pipeline_block::value_type::element_type * prev_map,
 				Eigen::Matrix3f k,
 				value_type t_gk_minus_one
 			) = 0;

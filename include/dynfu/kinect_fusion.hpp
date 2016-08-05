@@ -54,17 +54,15 @@ namespace dynfu {
 			dynfu::surface_prediction_pipeline_block * sppb_;
 			timer::duration sppbt_;
 			dynfu::depth_device::value_type frame_;
-			dynfu::measurement_pipeline_block::vertex_value_type v_;
-			dynfu::measurement_pipeline_block::normal_value_type n_;
+			dynfu::measurement_pipeline_block::value_type map_;
 			dynfu::pose_estimation_pipeline_block::value_type t_g_k_;
 			dynfu::update_reconstruction_pipeline_block::value_type tsdf_;
-			dynfu::surface_prediction_pipeline_block::vertex_value_type prev_v_;
-			dynfu::surface_prediction_pipeline_block::normal_value_type prev_n_;
+			dynfu::surface_prediction_pipeline_block::value_type prev_map_;
 			
 			
 			void check_pipeline () const;
 			void get_frame ();
-			void get_vertex_and_normal_maps ();
+			void get_vertex_and_normal_map ();
 			void get_tgk ();
 			void get_tsdf ();
 			void get_prediction ();
@@ -206,29 +204,17 @@ namespace dynfu {
 			 */
 			dynfu::depth_device::value_type::element_type & frame () const noexcept;
 			/**
-			 *	Retrieves the vertex map calculated from the depth frame
-			 *	during the last invocation.
+			 *	Retrieves the vertex and normal map calculated from the
+			 *	depth frame during the last invocation.
 			 *
 			 *	If this object has not yet been successfully invoked
 			 *	the behaviour is undefined.
 			 *
 			 *	\return
 			 *		A reference to a \ref pipeline_value object which
-			 *		represents the last vertex map.
+			 *		represents the last vertex and normal map.
 			 */
-			dynfu::measurement_pipeline_block::vertex_value_type::element_type & vertex_map () const noexcept;
-			/**
-			 *	Retrieves the normal map calculated from the depth frame
-			 *	during the last invocation.
-			 *
-			 *	If this object has not yet been successfully invoked
-			 *	the behaviour is undefined.
-			 *
-			 *	\return
-			 *		A reference to a \ref pipeline_value object which
-			 *		represents the last normal map.
-			 */
-			dynfu::measurement_pipeline_block::normal_value_type::element_type & normal_map () const noexcept;
+			dynfu::measurement_pipeline_block::value_type::element_type & vertex_and_normal_map () const noexcept;
 			/**
 			 *	Retrieves the pose estimation calculated during the last
 			 *	invocation.
@@ -284,31 +270,18 @@ namespace dynfu {
 			 */
 			std::size_t truncated_signed_distance_function_depth () const noexcept;
 			/**
-			 *	Retrieves the vertex map which was obtained as a result
-			 *	of raycasting the truncated signed distance function during
-			 *	the last invocation.
+			 *	Retrieves the vertex and normal map which was obtained as a
+			 *	result of raycasting the truncated signed distance function
+			 *	during the last invocation.
 			 *
 			 *	If this object has not yet been successfully invoked the
 			 *	behaviour is undefined.
 			 *
 			 *	\return
 			 *		A reference to a \ref pipeline_value object which
-			 *		represents the last predicted vertex map.
+			 *		represents the last predicted vertex and normal map.
 			 */
-			dynfu::surface_prediction_pipeline_block::vertex_value_type::element_type & predicted_vertex_map () const noexcept;
-			/**
-			 *	Retrieves the normal map which was obtained as a result
-			 *	of raycasting the truncated signed distance function during
-			 *	the last invocation.
-			 *
-			 *	If this object has not yet been successfully invoked the
-			 *	behaviour is undefined.
-			 *
-			 *	\return
-			 *		A reference to a \ref pipeline_value object which
-			 *		represents the last predicted normal map.
-			 */
-			dynfu::surface_prediction_pipeline_block::normal_value_type::element_type & predicted_normal_map () const noexcept;
+			dynfu::surface_prediction_pipeline_block::value_type::element_type & predicted_vertex_and_normal_map () const noexcept;
 		
 		
 	};

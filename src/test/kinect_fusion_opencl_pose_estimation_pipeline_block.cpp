@@ -9,12 +9,12 @@
 #include <dynfu/kinect_fusion_opencl_measurement_pipeline_block.hpp>
 #include <dynfu/msrc_file_system_depth_device.hpp>
 #include <dynfu/path.hpp>
+#include <dynfu/pixel.hpp>
 #include <dynfu/pose_estimation_pipeline_block.hpp>
 #include <Eigen/Dense>
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
-#include <tuple>
 #include <utility>
 #include <vector>
 #include <catch.hpp>
@@ -75,26 +75,19 @@ namespace {
 			dynfu::kinect_fusion_opencl_measurement_pipeline_block mpb;
 
 
-			std::vector<Eigen::Vector3f> vertices_to_global (std::vector<Eigen::Vector3f> v) {
+			std::vector<dynfu::pixel> to_global (std::vector<dynfu::pixel> ps) {
 
-				std::transform(v.begin(),v.end(),v.begin(),[&] (const auto & v) noexcept {
+				std::transform(ps.begin(),ps.end(),ps.begin(),[&] (const auto & p) noexcept {
 
-					Eigen::Vector4f vh(v(0),v(1),v(2),1.0f);
+					Eigen::Vector4f vh(p.v(0),p.v(1),p.v(2),1.0f);
 					vh=t_gk_initial*vh;
-					return Eigen::Vector3f(vh(0)/vh(3),vh(1)/vh(3),vh(2)/vh(3));
+					Eigen::Vector3f v(vh(0),vh(1),vh(2));
+
+					return dynfu::pixel{v,t_gk_initial.block<3,3>(0,0)*p.n};
 
 				});
 
-				return v;
-
-			}
-
-
-			std::vector<Eigen::Vector3f> normals_to_global (std::vector<Eigen::Vector3f> n) {
-
-				std::transform(n.begin(),n.end(),n.begin(),[&] (const auto & n) noexcept {	return t_gk_initial.block<3,3>(0,0)*n;	});
-
-				return n;
+				return ps;
 
 			}
 
@@ -137,10 +130,8 @@ SCENARIO_METHOD(fixture,"dynfu::kinect_fusion_opencl_pose_estimation_pipeline_bl
 		WHEN("It is invoked for the first time (i.e. passed NULL as the 3rd, 4th, and 5th arguments to dynfu::kinect_fusion_opencl_pose_estimation_pipeline_block::operator ())") {
 
 			auto frame_ptr=dd();
-			auto t=mpb(*frame_ptr,width,height,k);
-			auto && v=std::get<0>(t);
-			auto && n=std::get<1>(t);
-			auto ptr=pepb(*v,*n,nullptr,nullptr,k,{});
+			auto m_ptr=mpb(*frame_ptr,width,height,k);
+			auto ptr=pepb(*m_ptr,nullptr,k,{});
 
 			THEN("The T_gk matrix provided to its constructor is returned") {
 
@@ -164,15 +155,11 @@ SCENARIO_METHOD(fixture,"dynfu::kinect_fusion_opencl_pose_estimation_pipeline_bl
 		WHEN("It is invoked on two identical sets of vertices and normals") {
 
 			auto frame_ptr=dd();
-			auto t=mpb(*frame_ptr,width,height,k);
-			auto && v=std::get<0>(t);
-			auto && n=std::get<1>(t);
-			auto ptr=pepb(*v,*n,nullptr,nullptr,k,{});
-			dynfu::cpu_pipeline_value<std::vector<Eigen::Vector3f>> pv;
-			pv.emplace(vertices_to_global(v->get()));
-			dynfu::cpu_pipeline_value<std::vector<Eigen::Vector3f>> pn;
-			pn.emplace(normals_to_global(n->get()));
-			ptr=pepb(*v,*n,&pv,&pn,k,std::move(ptr));
+			auto m_ptr=mpb(*frame_ptr,width,height,k);
+			auto ptr=pepb(*m_ptr,nullptr,k,{});
+			dynfu::cpu_pipeline_value<std::vector<dynfu::pixel>> pv;
+			pv.emplace(to_global(m_ptr->get()));
+			ptr=pepb(*m_ptr,&pv,k,std::move(ptr));
 
 			THEN("The resulting T_gk matrix is an identity matrix with the translation components from the initial T_gk matrix") {
 
@@ -186,7 +173,10 @@ SCENARIO_METHOD(fixture,"dynfu::kinect_fusion_opencl_pose_estimation_pipeline_bl
 
 	}
 
+
 }
+
+
 
 
 static bool is_bounded_by (float val, float a, float b) noexcept {
@@ -207,19 +197,19 @@ SCENARIO_METHOD(fixture,"Between consecutive frames dynfu::kinect_fusion_opencl_
 		WHEN("It is invoked on two consecutive frames") {
 
 			auto frame_ptr=dd();
-			auto t1=mpb(*frame_ptr,width,height,k);
-			auto && v1=std::get<0>(t1);
-			auto && n1=std::get<1>(t1);
-			auto ptr=pepb(*v1,*n1,nullptr,nullptr,k,{});
+			auto m_ptr1=mpb(*frame_ptr,width,height,k);
+			auto ptr=pepb(*m_ptr1,nullptr,k,{});
 			frame_ptr=dd(std::move(frame_ptr));
-			auto t2=mpb(*frame_ptr,width,height,k);
-			auto && v2=std::get<0>(t2);
-			auto && n2=std::get<1>(t2);
-			dynfu::cpu_pipeline_value<std::vector<Eigen::Vector3f>> pv;
-			pv.emplace(vertices_to_global(v1->get()));
-			dynfu::cpu_pipeline_value<std::vector<Eigen::Vector3f>> pn;
-			pn.emplace(normals_to_global(n1->get()));
-			ptr=pepb(*v2,*n2,&pv,&pn,k,std::move(ptr));
+			auto m_ptr2=mpb(*frame_ptr,width,height,k);
+			dynfu::cpu_pipeline_value<std::vector<dynfu::pixel>> pv;
+			pv.emplace(to_global(m_ptr2->get()));
+			ptr=pepb(*m_ptr1,&pv,k,std::move(ptr));
+
+			THEN("The resulting T_gk matrix is not simply the initial T_gk matrix") {
+
+				CHECK(ptr->get()!=t_gk_initial);
+
+			}
 
 			THEN("The resulting T_gk matrix indicates a small change in camera pose") {
 
@@ -281,30 +271,23 @@ SCENARIO_METHOD(fixture,"Between consecutive frames dynfu::kinect_fusion_opencl_
 }
 
 
-SCENARIO_METHOD(fixture,"When a minimum number of point-to-point correspondences cannot be made dynfu::kinect_fusion_opencl_pose_estimation_pipeline_block objects throw a dynfu::pose_estimation_pipeline_block::tracking_lost_error","[dynfu][kinect_fusion_opencl_pose_estimation_pipeline_block][pose_estimation_pipeline_block]") {
+SCENARIO_METHOD(fixture,"When a minimum number of point-to-point correspondences cannot be made dynfu::kinect_fusion_opencl_pose_estimation_pipeline_block objects throw a dynfu::pose_estimation_pipeline_block::tracking_lost_error","[dynfu][kinect_fusion_opencl_pose_estimation_pipeline_block][pose_estimation_pipeline_block][!mayfail]") {
 
 	GIVEN("A dynfu::kinect_fusion_opencl_pose_estimation_pipeline_block object") {
 
 		dynfu::kinect_fusion_opencl_pose_estimation_pipeline_block pepb(pf,q,0.10f,std::sin(20.0f*3.14159f/180.0f),width,height,t_gk_initial);
-		pepb.check_correspondences((307200U/10U)*9U);
 
 		THEN("Invoking it on two non-consecutive frames results in a dynfu::pose_estimation_pipeline_block::tracking_lost_error") {
 
 			auto frame_ptr=dd();	//	Frame 00
-			auto t1=mpb(*frame_ptr,width,height,k);
+			auto m_ptr1=mpb(*frame_ptr,width,height,k);
 			frame_ptr=dd(std::move(frame_ptr));	//	Frame 01
 			frame_ptr=dd(std::move(frame_ptr));	//	Frame 23
-			auto t2=mpb(*frame_ptr,width,height,k);
-			auto && v1=std::get<0>(t1);
-			auto && n1=std::get<1>(t1);
-			auto ptr=pepb(*v1,*n1,nullptr,nullptr,k,{});
-			auto && v2=std::get<0>(t2);
-			auto && n2=std::get<1>(t2);
-			dynfu::cpu_pipeline_value<std::vector<Eigen::Vector3f>> pv;
-			pv.emplace(vertices_to_global(v1->get()));
-			dynfu::cpu_pipeline_value<std::vector<Eigen::Vector3f>> pn;
-			pn.emplace(normals_to_global(n1->get()));
-			CHECK_THROWS_AS(pepb(*v2,*n2,&pv,&pn,k,std::move(ptr)),dynfu::pose_estimation_pipeline_block::tracking_lost_error);
+			auto m_ptr2=mpb(*frame_ptr,width,height,k);
+			auto ptr=pepb(*m_ptr1,nullptr,k,{});
+			dynfu::cpu_pipeline_value<std::vector<dynfu::pixel>> pv;
+			pv.emplace(to_global(m_ptr2->get()));
+			CHECK_THROWS_AS(pepb(*m_ptr1,&pv,k,std::move(ptr)),dynfu::pose_estimation_pipeline_block::tracking_lost_error);
 			
 		}
 

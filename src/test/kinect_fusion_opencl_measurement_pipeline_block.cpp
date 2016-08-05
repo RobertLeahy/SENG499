@@ -2,17 +2,19 @@
 
 
 #include <boost/compute.hpp>
+#include <dynfu/camera.hpp>
 #include <dynfu/cpu_pipeline_value.hpp>
 #include <dynfu/file_system_depth_device.hpp>
 #include <dynfu/file_system_opencl_program_factory.hpp>
 #include <dynfu/filesystem.hpp>
 #include <dynfu/msrc_file_system_depth_device.hpp>
 #include <dynfu/path.hpp>
+#include <dynfu/pixel.hpp>
 #include <Eigen/Dense>
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
-#include <tuple>
+#include <limits>
 #include <vector>
 #include <catch.hpp>
 
@@ -90,7 +92,7 @@ namespace {
 }
 
 
-SCENARIO_METHOD(fixture, "A dynfu::kinect_fusion_opencl_measurement_pipeline_block implements the measurement phase of the kinect fusion pipeline on the GPU using OpenCL","[dynfu][measurement_pipeline_block][kinect_fusion_opencl_measurement_pipeline_block][!mayfail]") {
+SCENARIO_METHOD(fixture, "A dynfu::kinect_fusion_opencl_measurement_pipeline_block implements the measurement phase of the kinect fusion pipeline on the GPU using OpenCL","[dynfu][measurement_pipeline_block][kinect_fusion_opencl_measurement_pipeline_block]") {
 	
 	GIVEN("A dynfu::kinect_fusion_opencl_measurement_pipeline_block") {		
 		
@@ -98,10 +100,11 @@ SCENARIO_METHOD(fixture, "A dynfu::kinect_fusion_opencl_measurement_pipeline_blo
 		dynfu::cpu_pipeline_value<std::vector<float>> pv;
 		std::vector<float> v{0.0f, 5.0f, 10.0f, 15.0f, 13.0f, 40.0f, 12.0f, 10.0f, 8.0f,19.0f,202.0f,102.0f,84.0f,293.0f,292.0f,293.0f};
 
+		auto nan = std::numeric_limits<float>::quiet_NaN();
 
 		std::vector<Eigen::Vector3f> vgt {
 			
-			{-1.39736e-011, 1.04802e-011, 2.55454e-011},
+			{nan, nan, nan},
 			{-2.7265, 2.05128, 5},
 			{-5.44231, 4.1074, 10.0118},
 			{-8.12818, 6.15382, 14.9999},
@@ -122,22 +125,22 @@ SCENARIO_METHOD(fixture, "A dynfu::kinect_fusion_opencl_measurement_pipeline_blo
 		
 		std::vector<Eigen::Vector3f> ngt {
 			
-			{0.585902, -0.585897, 0.559861},
+			{nan, nan, nan},
 			{0.42106, -0.735997, 0.53011},
 			{0.746723, -0.368941, 0.553433},
-			{0, 0, 0},
+			{nan, nan, nan},
 			{0.72885, 0.673795, 0.121564},
 			{-0.751723, 0.35527, -0.555604},
 			{-0.196665, -0.940886, 0.275782},
-			{0, 0, 0},
+			{nan, nan, nan},
 			{0.454822, -0.710761, 0.536615},
 			{0.577981, -0.596583, 0.5568},
 			{-0.886228, -0.279082, -0.369748},
-			{0, 0, 0},
-			{0, 0, 0},
-			{0, 0, 0},
-			{0, 0, 0},
-			{0, 0, 0}
+			{nan, nan, nan},
+			{nan, nan, nan},
+			{nan, nan, nan},
+			{nan, nan, nan},
+			{nan, nan, nan}
 			
 		};
 
@@ -146,17 +149,15 @@ SCENARIO_METHOD(fixture, "A dynfu::kinect_fusion_opencl_measurement_pipeline_blo
 		
 		WHEN("It is invoked") {
 			
-			auto t=kfompb(pv, width, height, k);
-			auto && v=std::get<0>(t);
-			auto && n=std::get<1>(t);
-			auto && vs=v->get();
-			auto && ns=n->get();
+			auto ptr=kfompb(pv, width, height, k);
+			auto && map=ptr->get();
 
-			THEN("The returned normals are all either exactly 0 or close to 1 in length") {
+			THEN("The returned normals are all either close to 1 in length or NaN") {
 				
-				for(auto && n : ns) {
-				
-					CHECK((n.norm() == Approx( 1.0f ) || n.isZero()));
+				for(auto && p : map) {
+
+					bool result(((std::isnan(p.n(0)) && std::isnan(p.n(1)) && std::isnan(p.n(2))) || (p.n.norm() == Approx(1.0f))));
+					CHECK(result);
 				
 				}
 				
@@ -166,9 +167,12 @@ SCENARIO_METHOD(fixture, "A dynfu::kinect_fusion_opencl_measurement_pipeline_blo
 			THEN("The returned vertices match the ground truth vertices within 0.001") {
 				
 				// Note: Eigen's default precision was too precise, here we only care about generally close
-				CHECK ( std::equal(vgt.begin(),vgt.end(),vs.begin(),vs.end(),[] (Eigen::Vector3f a, Eigen::Vector3f b) noexcept { 
-				
-					return (a-b).isZero(0.001f);
+				CHECK ( std::equal(vgt.begin(),vgt.end(),map.begin(),map.end(),[] (const auto & a, const auto & b) noexcept {
+
+					bool a_nan=std::isnan(a(0)) && std::isnan(a(1)) && std::isnan(a(2));
+					if (a_nan) return std::isnan(b.v(0)) && std::isnan(b.v(1)) && std::isnan(b.v(2));
+					
+					return (a-b.v).isZero(0.001f);
 				
 				}) );
 
@@ -178,9 +182,12 @@ SCENARIO_METHOD(fixture, "A dynfu::kinect_fusion_opencl_measurement_pipeline_blo
 			THEN("The returned normals match the ground truth normals within 0.001") {
 				
 				// Note: Eigen's default precision was too precise, here we only care about generally close
-				CHECK ( std::equal(ngt.begin(),ngt.end(),ns.begin(),ns.end(),[] (Eigen::Vector3f a, Eigen::Vector3f b) noexcept { 
+				CHECK ( std::equal(ngt.begin(),ngt.end(),map.begin(),map.end(),[] (const auto & a, const auto & b) noexcept {
+
+					bool a_nan=std::isnan(a(0)) && std::isnan(a(1)) && std::isnan(a(2));
+					if (a_nan) return std::isnan(b.n(0)) && std::isnan(b.n(1)) && std::isnan(b.n(2));
 				
-					return (a-b).isZero(0.001f);
+					return (a-b.n).isZero(0.001f);
 				
 				}) );
 
@@ -204,23 +211,23 @@ SCENARIO_METHOD(fixture,"The vertices returned by a dynfu::kinect_fusion_opencl_
 
 			auto frame_ptr=dd();
 			auto k=dd.k();
-			auto t=kfompb(*frame_ptr,dd.width(),dd.height(),k);
+			auto h=dd.height();
+			auto w=dd.width();
+			auto ptr=kfompb(*frame_ptr,w,h,k);
 
 			THEN("The vertices of the returned vertex map may be deprojected back into pixel space") {
 
-				auto && v=std::get<0>(t)->get();
+				auto && map=ptr->get();
 				std::size_t idx(0);
-				for (int y=0;y<int(dd.height());++y) {
+				for (int y=0;y<int(h);++y) {
 
-					for (int x=0;x<int(dd.width());++x,++idx) {
+					for (int x=0;x<int(w);++x,++idx) {
 
-						Eigen::Vector3f curr=v[idx];
-						if (std::isnan(curr(0))) continue;
-						Eigen::Vector3f deproj(k*curr);
-						int dpx=std::round(deproj(0)/deproj(2));
-						CHECK(dpx==x);
-						int dpy=std::round(deproj(1)/deproj(2));
-						CHECK(dpy==y);
+						auto v=map[idx].v;
+						if (std::isnan(v(0))) continue;
+						auto pair=dynfu::to_pixel(v,k);
+						CHECK(pair.first(0)==x);
+						CHECK(pair.first(1)==y);
 
 					}
 

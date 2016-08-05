@@ -5,6 +5,7 @@
 #include <dynfu/cpu_pipeline_value.hpp>
 #include <dynfu/filesystem.hpp>
 #include <dynfu/path.hpp>
+#include <dynfu/pixel.hpp>
 #include <Eigen/Dense>
 #include <algorithm>
 #include <tuple>
@@ -45,7 +46,7 @@ namespace {
 }
 
 
-SCENARIO_METHOD(fixture,"dynfu::kinect_fusion_opencl_frame_to_frame_surface_prediction_pipeline_block objects simply copy the provided vertex and normal maps to their output","[dynfu][surface_prediction_pipeline_block][kinect_fusion_opencl_frame_to_frame_surface_prediction_pipeline_block]") {
+SCENARIO_METHOD(fixture,"dynfu::kinect_fusion_opencl_frame_to_frame_surface_prediction_pipeline_block objects simply copy the provided vertex and normal map to their output","[dynfu][surface_prediction_pipeline_block][kinect_fusion_opencl_frame_to_frame_surface_prediction_pipeline_block]") {
 
 	GIVEN("A dynfu::kinect_fusion_opencl_frame_to_frame_surface_prediction_pipeline_block object") {
 
@@ -57,21 +58,20 @@ SCENARIO_METHOD(fixture,"dynfu::kinect_fusion_opencl_frame_to_frame_surface_pred
 			tsdf.emplace();
 			dynfu::cpu_pipeline_value<Eigen::Matrix4f> pose;
 			pose.emplace(Eigen::Matrix4f::Zero());
-			dynfu::cpu_pipeline_value<std::vector<Eigen::Vector3f>> vpv;
-			dynfu::cpu_pipeline_value<std::vector<Eigen::Vector3f>> npv;
-			auto && v=vpv.emplace();
-			auto && n=npv.emplace();
-			v.emplace_back(1.0f,2.0f,3.0f);
-			n.emplace_back(4.0f,5.0f,6.0f);
+			dynfu::cpu_pipeline_value<std::vector<dynfu::pixel>> map_pv;
+			auto && map=map_pv.emplace();
+			map.push_back({{1.0f,2.0f,3.0f},{4.0f,5.0f,6.0f}});
 
-			auto tuple=sppb(tsdf,0,0,0,pose,Eigen::Matrix3f::Zero(),vpv,npv,dynfu::kinect_fusion_opencl_frame_to_frame_surface_prediction_pipeline_block::value_type{});
+			auto ptr=sppb(tsdf,0,0,0,pose,Eigen::Matrix3f::Zero(),map_pv,dynfu::kinect_fusion_opencl_frame_to_frame_surface_prediction_pipeline_block::value_type{});
 
-			THEN("The vertex and normal maps provided are simply copied into the result") {
+			THEN("The vertex and normal map provided is simply copied into the result") {
 
-				auto && vr=std::get<0>(tuple)->get();
-				CHECK(std::equal(vr.begin(),vr.end(),v.begin(),v.end()));
-				auto && nr=std::get<1>(tuple)->get();
-				CHECK(std::equal(nr.begin(),nr.end(),n.begin(),n.end()));
+				auto && result=ptr->get();
+				CHECK(std::equal(result.begin(),result.end(),map.begin(),map.end(),[&] (const auto & a, const auto & b) noexcept {
+
+					return (a.v==b.v) && (a.n==b.n);
+
+				}));
 
 			}
 

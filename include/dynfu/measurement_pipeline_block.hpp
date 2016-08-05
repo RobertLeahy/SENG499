@@ -9,9 +9,9 @@
 #include <Eigen/Dense>
 #include <dynfu/depth_device.hpp>
 #include <dynfu/pipeline_value.hpp>
+#include <dynfu/pixel.hpp>
 #include <cstddef>
 #include <memory>
-#include <tuple>
 #include <vector>
 
 
@@ -32,36 +32,14 @@ namespace dynfu {
 		
 		
 			/**
-			 *	A collection of vertices.
-			 *
-			 *	Each vertex in a vertex map has a corresponding
-			 *	normal in the associated normal map.
+			 *	The type used to represent the combined vertex and
+			 *	normal map.
 			 */
-			using vertex_map_type=std::vector<Eigen::Vector3f>;
-			/**
-			 *	A std::unique_ptr to a \ref pipeline_value
-			 *	representing a vertex map.
-			 */
-			using vertex_value_type=std::unique_ptr<pipeline_value<vertex_map_type>>;
-			/**
-			 *	A collection of normals.
-			 *
-			 *	Each normal in a normal map has a corresponding
-			 *	vertex in the associated vertex map.
-			 */
-			using normal_map_type=std::vector<Eigen::Vector3f>;
-			/**
-			 *	A std::unique_ptr to a \ref pipeline_value
-			 *	representing a normal map.
-			 */
-			using normal_value_type=std::unique_ptr<pipeline_value<normal_map_type>>;
+			using map_type=std::vector<pixel>;
 			/**
 			 *	The type this pipeline block generates.
-			 *
-			 *	A tuple whose first element is a vertex map and whose
-			 *	second element is the associated normal map.
 			 */
-			using value_type=std::tuple<vertex_value_type,normal_value_type>;
+			using value_type=std::unique_ptr<pipeline_value<map_type>>;
 			
 			
 			measurement_pipeline_block () = default;
