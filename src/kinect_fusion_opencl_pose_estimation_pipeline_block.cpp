@@ -71,14 +71,20 @@ namespace kinfu {
 
 		}
 
-		auto frame_size_after=frame_size/group_size_;
-		mats_=boost::compute::buffer(q_.get_context(),frame_size_after*sizeof_mats);
-		if ((frame_size_after%group_size_)==0) mats_output_=boost::compute::buffer(q_.get_context(),(frame_size_after/group_size_)*sizeof_mats);
-
 		auto p=pf("pose_estimation");
 		corr_=p.create_kernel("correspondences");
 		parallel_sum_=p.create_kernel("parallel_sum");
 		serial_sum_=p.create_kernel("serial_sum");
+
+		group_size_ = std::min(group_size_, corr_.get_work_group_info<std::size_t>(q_.get_device(), CL_KERNEL_WORK_GROUP_SIZE));
+
+		auto frame_size_after=frame_size/group_size_;
+		mats_=boost::compute::buffer(q_.get_context(),frame_size_after*sizeof_mats);
+		if (
+			(group_size_!=1) &&
+			((frame_size_after%group_size_)==0)
+		) mats_output_=boost::compute::buffer(q_.get_context(),(frame_size_after/group_size_)*sizeof_mats);
+
 
 		boost::compute::local_buffer<float> scratch(mats_floats*group_size_);
 

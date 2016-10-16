@@ -44,6 +44,9 @@ before_install:
   - if [ $TRAVIS_OS_NAME = "linux" ]; then
       mkdir -p include;
       curl -o include/catch.hpp https://raw.githubusercontent.com/philsquared/Catch/master/single_include/catch.hpp;
+      wget -O half.zip http://sourceforge.net/projects/half/files/latest/download;
+      unzip -q half.zip;
+      cp half-1.11.0/include/half.hpp include/half.hpp;
       sudo apt-get update -q;
       sudo apt-get -y install opencl-headers ocl-icd-opencl-dev libdc1394-22-dev libavcodec-dev libavformat-dev libswscale-dev libtheora-dev libvorbis-dev libxvidcore-dev libx264-dev yasm libopencore-amrnb-dev libopencore-amrwb-dev libv4l-dev libxine2-dev zlib1g-dev libjpeg-dev libwebp-dev libpng-dev libtiff5-dev libjasper-dev libopenexr-dev libgdal-dev qt5-default libvtk6-dev libtbb-dev libgtk-3-dev libglew-dev libglu1-mesa-dev xorg-dev;
       git clone https://github.com/boostorg/compute.git;
@@ -72,7 +75,7 @@ before_install:
         unzip -q 3.1.0.zip;
       fi;
       cd opencv-3.1.0;
-      cmake .;
+      cmake -D CMAKE_BUILD_TYPE=RELEASE .;
       make -j4;
       sudo make install;
       cd ${HOME};
@@ -121,6 +124,10 @@ before_install:
       brew install eigen;
       brew install pkg-config;
       brew install boost;
+      mkdir -p include;
+      wget -O half.zip http://sourceforge.net/projects/half/files/latest/download;
+      unzip -q half.zip;
+      cp half-1.11.0/include/half.hpp include/half.hpp;
       git clone https://github.com/boostorg/compute.git;
       sudo cp -r ./compute/include/boost/* /usr/local/include/boost;
       git clone https://github.com/philsquared/Catch.git;
@@ -133,7 +140,7 @@ before_install:
       wget https://github.com/Itseez/opencv/archive/3.1.0.zip;
       unzip -q 3.1.0.zip;
       cd opencv-3.1.0;
-      cmake .;
+      cmake -D CMAKE_BUILD_TYPE=RELEASE .;
       make -j4;
       make install;
       cd ${HOME};
